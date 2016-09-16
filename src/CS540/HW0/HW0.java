@@ -4,6 +4,9 @@
  * @author Shyamal Anadkat (NetID: anadkat) 9/13/2016
  *
  */
+
+package CS540.HW0;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.DecimalFormat;
