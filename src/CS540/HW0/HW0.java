@@ -1,12 +1,11 @@
+package CS540.HW0;
+
 /**
  * CS540 HW0: Hand-in Practice and Parsing ML Datasets
  * 
  * @author Shyamal Anadkat (NetID: anadkat) 9/13/2016
  *
  */
-
-package CS540.HW0;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.DecimalFormat;

@@ -1,0 +1,17 @@
+3
+color - R G  
+age - Y O
+weight - L H
+
+pos
+neg
+8
+
+ex1 pos R O H
+ex2 pos G Y H
+ex3 pos G O H 
+ex4 neg R O H
+ex5 neg G Y L
+ex6 neg G O L
+ex7 neg G O L 
+ex8 neg G Y L 

@@ -111,7 +111,6 @@ public class BuildAndTestDecisionTree
 			System.out.println("Remainder for "+trainExamples.getfeatures()[2].getName()+":"+getRemainder(trainExamples.getfeatures()[2],trainExamples));
 			//testExamples.PrintAllExamples();  // Instead, just view it on the screen
 			System.out.println(getBestAttribute(trainExamples).getName());
-			System.out.println(getPluralityValue(trainExamples));
 			//System.out.println(attributeInFeatureCnt("R", trainExamples, 0)); //WORKS !!!!
 		}
 
@@ -123,9 +122,10 @@ public class BuildAndTestDecisionTree
 		BinaryFeature best = in.getfeatures()[0]; //default/random
 		double leastRemainder = Integer.MAX_VALUE; //or max info gain
 		for(int i = 0; i < in.getNumberOfFeatures(); i++) {
-			BinaryFeature temp= in.getfeatures()[i];
-			best = leastRemainder > getRemainder(temp, in) ? temp:best;
-			leastRemainder = getRemainder(temp,in);
+			if(getRemainder(in.getfeatures()[i],in) < leastRemainder) {
+				System.out.println("happended");
+				best = in.getfeatures()[i];
+			}
 		}
 		return best;
 	}
@@ -153,24 +153,6 @@ public class BuildAndTestDecisionTree
 	}
 
 
-	public static String getPluralityValue(ListOfExamples loe) {
-		int maxCnt = 0; 
-		String retVal = null;
-		int firstLabelCnt = loe.getLabelCount(loe.getOutputLabels().getFirstValue());
-		int secondLabelCnt = loe.getLabelCount(loe.getOutputLabels().getSecondValue());
-		//System.out.println(firstLabelCnt+" "+secondLabelCnt);
-		String firstLabel = loe.getOutputLabels().getFirstValue();
-		String secondLabel = loe.getOutputLabels().getSecondValue();
-
-		if(firstLabelCnt == secondLabelCnt) {
-			retVal = loe.getOutputLabels().getFirstValue().
-					compareTo(loe.getOutputLabels().getSecondValue())<0 ? firstLabel : secondLabel;
-			return retVal; 
-		}
-		return firstLabelCnt > secondLabelCnt ? firstLabel : secondLabel;
-	}
-
-
 	//info remaining for one value per attribute/feature 
 	@SuppressWarnings("unused")
 	private static double infoRemaining(double numPos, double numNeg, double numExamples, double count ) {
@@ -194,6 +176,7 @@ public class BuildAndTestDecisionTree
 				retVal++;
 			}
 		}
+		//System.out.println(retVal);
 		return retVal;
 	}
 
@@ -209,7 +192,8 @@ public class BuildAndTestDecisionTree
 				return i;
 			}
 		}
-		return -1;
+		return 0;
+
 	}
 
 	//log2 function
@@ -218,6 +202,15 @@ public class BuildAndTestDecisionTree
 		return (Math.log(f)/Math.log(2.0));
 	}
 }
+
+
+
+
+
+
+
+
+
 
 // This class, an extension of ArrayList, holds an individual example.
 // The new method PrintFeatures() can be used to
