@@ -1,17 +1,17 @@
 3
-color - R G  
-age - Y O
-weight - L H
+color - Red Green  
+age - Yng Old
+weight - Li8 Hvy
 
 pos
 neg
 8
 
-ex1 pos R O H
-ex2 pos G Y H
-ex3 pos G O H 
-ex4 neg R O H
-ex5 neg G Y L
-ex6 neg G O L
-ex7 neg G O L 
-ex8 neg G Y L 
+ex1 pos Red Old Hvy
+ex2 neg Green Yng Hvy
+ex3 neg Green Yng Hvy
+ex4 pos Red Yng Hvy
+ex5 neg Red Old Li8
+ex6 pos Green Old Li8
+ex7 neg Red Yng Li8 
+ex8 pos Green Old Li8 

@@ -2,7 +2,7 @@ import java.util.*;
 import java.io.*;
 
 ////////////////////////////////////////////////////////////////////////////
-//                                                                       
+// Shyamal Anadkat                                      
 // Code for HW1, Problem 2
 //               Inducing Decision Trees
 //               CS540 (Shavlik)
@@ -10,33 +10,20 @@ import java.io.*;
 ////////////////////////////////////////////////////////////////////////////
 
 /* BuildAndTestDecisionTree.java 
-
-   Copyright 2008, 2011, 2013 by Jude Shavlik and Nick Bridle.
-   May be freely used for non-profit educational purposes.
-
    To run after compiling, type:
-
      java BuildAndTestDecisionTree <trainsetFilename> <testsetFilename>
-
-   Eg,
-
-     java BuildAndTestDecisionTree train-hepatitis.data test-hepatitis.data
-
-   where <trainsetFilename> and <testsetFilename> are the 
-   input files of examples.
-
    Notes:  
 
            Please place all your HW1 code in a single file. 
 
            All that is required is that you keep the name of the
-          BuildAndTestDecisionTree class and don't change the 
-          calling convention for its main function.  
+           BuildAndTestDecisionTree class and don't change the 
+           calling convention for its main function.  
 
            There is no need to worry about "error detection" when reading data files.
            We'll be responsible for that.  HOWEVER, DO BE AWARE THAT
            WE WILL USE ONE OR MORE DIFFERENT DATASETS DURING TESTING,
-           SO DON'T  WRITE CODE THAT IS SPECIFIC TO THE PROVIDED
+           SO DON'T WRITE CODE THAT IS SPECIFIC TO THE PROVIDED
            DATASETS.  (As  stated above, you may assume that our additional datasets
            are properly formatted in the style used for the provided dataset.)
 
@@ -53,8 +40,6 @@ import java.io.*;
 public class BuildAndTestDecisionTree
 {
 
-	// "Main" reads in the names of the files we want to use, then reads 
-	// in their examples.
 	public static void main(String[] args)
 	{   
 		if (args.length != 2)
@@ -80,7 +65,8 @@ public class BuildAndTestDecisionTree
 			System.exit(1);
 		}
 		else
-		{ /* The following is included so you can see the data organization.
+		{ 
+			/* The following is included so you can see the data organization.
          You'll need to REPLACE it with code that:
 
           1) uses the TRAINING SET of examples to build a decision tree
@@ -95,64 +81,241 @@ public class BuildAndTestDecisionTree
              (though during debugging you might wish to print out the full
              example to see if it was processed correctly by your decision 
              tree)       
-		 */
-
+			 */
 			//System.out.println(infoRemaining(1,1,1,2));
-			trainExamples.DescribeDataset();
-			// testExamples.DescribeDataset();
+			//trainExamples.DescribeDataset();
+			testExamples.DescribeDataset();
 			//trainExamples.PrintThisExample(0);  // Print out an example
 			//trainExamples.PrintAllExamples(); // Don't waste paper printing all 
 			// of this out!
 			//System.out.println(getIndexOfFeature(trainExamples,"weight"));
 			//System.out.println(trainExamples.getAttributeForLabelCnt("neg", "Y"));
 			//System.out.println(infoNeeded((double)1/3,(double)2/3));
-			System.out.println("Remainder for "+trainExamples.getfeatures()[0].getName()+":"+getRemainder(trainExamples.getfeatures()[0],trainExamples));
-			System.out.println("Remainder for "+trainExamples.getfeatures()[1].getName()+":"+getRemainder(trainExamples.getfeatures()[1],trainExamples));
-			System.out.println("Remainder for "+trainExamples.getfeatures()[2].getName()+":"+getRemainder(trainExamples.getfeatures()[2],trainExamples));
+			System.out.println("Remainder for "+
+					trainExamples.getfeatures()[0].getName()+":"+getRemainder(trainExamples.getfeatures()[0],trainExamples));
+			System.out.println("Remainder for "+
+					trainExamples.getfeatures()[1].getName()+":"+getRemainder(trainExamples.getfeatures()[1],trainExamples));
+			System.out.println("Remainder for "+
+					trainExamples.getfeatures()[2].getName()+":"+getRemainder(trainExamples.getfeatures()[2],trainExamples));
 			//testExamples.PrintAllExamples();  // Instead, just view it on the screen
-			System.out.println(getBestAttribute(trainExamples).getName());
-			System.out.println(getPluralityValue(trainExamples));
+			//System.out.println(getBestAttribute(trainExamples).getName());
+			//System.out.println(getPluralityValue(trainExamples));
 			//System.out.println(attributeInFeatureCnt("R", trainExamples, 0)); //WORKS !!!!
+			//System.out.println(hasSingleClass(trainExamples));
+			//System.out.println(getExamplesForAttribute(trainExamples,"weight", "Li8"));
+			DecisionTreeNode dtn = decisionTreeLearning(trainExamples,getAllFeatures(trainExamples), trainExamples);
+			System.out.println("-------------------------------------------");
+			printDTree(dtn);
+			System.out.println("--------------------------");
+			for(int i = 0; i < 20; i ++) {
+				System.out.println(classifyExample(testExamples.get(i),dtn,trainExamples));
+			}
+			//System.out.println(dtn.getTreeSize());
 		}
 
 		Utilities.waitHere("Hit <enter> when ready to exit.");
 	}
 
+	/**
+	 * ID3 algorithm to build and learn decision tree
+	 * @param examples
+	 * @param attributes
+	 * @param parent_egs
+	 * @return
+	 */
+	public static DecisionTreeNode decisionTreeLearning(ListOfExamples examples, 
+			List<BinaryFeature> attributes, ListOfExamples parent_egs) {
 
-	private static BinaryFeature getBestAttribute(ListOfExamples in) {
-		BinaryFeature best = in.getfeatures()[0]; //default/random
+		if(examples.isEmpty() || examples == null) { 
+			//System.out.println("leaf node: "+getPluralityValue(parent_egs));
+			DecisionTreeNode ln = new DecisionTreeNode("leaf",getPluralityValue(parent_egs));
+			return ln;
+		}
+
+		else if (hasSingleClass(examples)) {
+			//return the classification
+			DecisionTreeNode ln = new DecisionTreeNode("leaf",examples.get(0).getLabel());
+			return ln;
+		}
+
+		else if(attributes.isEmpty() || attributes == null) {
+			//return that 
+			DecisionTreeNode ln = new DecisionTreeNode("leaf",getPluralityValue(examples));
+			return ln;
+		}
+
+		else {
+			BinaryFeature bestF = getBestAttribute(examples,attributes);
+			//System.out.println("BEST FEATURE: "+bestF.getName());
+			List<BinaryFeature> leftF = getRemainingFeatures(bestF, attributes);
+			DecisionTreeNode root = new DecisionTreeNode(bestF,examples,"in");
+
+
+			//for value one of bestF
+			root.setLeftBranch(bestF.getFirstValue());
+			//System.out.println("LEFT BRANCH: "+root.getLeftBranch());
+			ListOfExamples exs = getExamplesForAttribute(root.getExamples(),bestF.getName(),bestF.getFirstValue());
+			DecisionTreeNode leftSubTree = decisionTreeLearning(exs,leftF,examples);
+			leftSubTree.setType("in");
+			root.setLeftTree(leftSubTree);
+
+
+			//for value two of bestF
+			root.setRightBranch(bestF.getSecondValue());
+			ListOfExamples exs2 = getExamplesForAttribute(root.getExamples(),bestF.getName() ,bestF.getSecondValue());
+			DecisionTreeNode rightSubTree = decisionTreeLearning(exs2,leftF,examples);
+			rightSubTree.setType("in");
+			root.setRightTree(rightSubTree);
+
+			return root;
+		}
+
+	}
+
+	/**
+	 * Prints decision tree given root 
+	 * @param root
+	 */
+	private static void printDTree(DecisionTreeNode root) {
+
+		if(root == null) {return;}
+
+		if (root.getType().equalsIgnoreCase("leaf") || root.getLeftTree() == null || root.getRightTree() == null) {
+			System.out.println("leaf: "+root.getLabel());
+		} 
+		else {
+			System.out.println("\t("+root.getFeature().getName()+")");
+			System.out.println("left branch: "+root.getLeftBranch());
+			printDTree(root.getLeftTree());
+
+			System.out.println("\t("+root.getFeature().getName()+")");
+			System.out.println("right branch: "+root.getRightBranch());
+			printDTree(root.getRightTree());
+		}
+	}
+
+
+	/**
+	 * Classifies a single given example, returns classification
+	 * @param in
+	 * @param root
+	 * @param loe
+	 * @return
+	 */
+	public static String classifyExample(Example in, DecisionTreeNode root, ListOfExamples loe) {
+
+		String label = null;
+
+		//BASE CASES 
+		if (root == null) {
+			System.out.println("root is null");
+			label = root.getLabel();
+			return root.getLabel();
+		}
+		if(root.getType().equalsIgnoreCase("leaf") || root.getLeftTree() == null || root.getRightTree() == null) {
+			label = root.getLabel();
+			return label;
+		}
+
+		//RECURSIVE CASE 
+		else {
+			BinaryFeature curr = root.getFeature();
+			int index = getIndexOfFeature(loe,curr.getName());
+			if(root.getLeftBranch().equalsIgnoreCase(in.get(index))) {
+				label = classifyExample(in, root.getLeftTree(), loe);
+			} else {
+				label = classifyExample(in,root.getRightTree(),loe);
+			}
+		}
+		return label;
+	}
+
+
+
+	/**
+	 * Determines best attribute from a list of examples 
+	 * @param in
+	 * @return
+	 */
+	private static BinaryFeature getBestAttribute(ListOfExamples in, List<BinaryFeature> remaining) {
+		BinaryFeature best = remaining.get(0); //default/random
 		double leastRemainder = Integer.MAX_VALUE; //or max info gain
-		for(int i = 0; i < in.getNumberOfFeatures(); i++) {
-			BinaryFeature temp= in.getfeatures()[i];
-			best = leastRemainder > getRemainder(temp, in) ? temp:best;
+		for(int i = 0; i < remaining.size(); i++) {
+			BinaryFeature temp= remaining.get(i);
+			best = leastRemainder >= getRemainder(temp, in) ? temp:best;
 			leastRemainder = getRemainder(temp,in);
 		}
 		return best;
 	}
 
+	/**
+	 * removes best feature from list of features  
+	 * @param best
+	 * @param features
+	 * @return
+	 */
+	private static List<BinaryFeature> getRemainingFeatures(BinaryFeature best, List<BinaryFeature> features) {
+		List<BinaryFeature> remaining = new ArrayList<BinaryFeature>();
+		for(BinaryFeature feat: features) {
+			if(!feat.getName().equals(best.getName())) {
+				BinaryFeature temp = new BinaryFeature(feat.getName(),feat.getFirstValue(),feat.getSecondValue());
+				remaining.add(temp);
+			}
+		}
+		return remaining; 
+	}
 
+	/**
+	 * 
+	 * @param loe
+	 * @return
+	 */
+	private static List<BinaryFeature> getAllFeatures(ListOfExamples loe) {
+		List<BinaryFeature> retVal = new ArrayList<BinaryFeature>();
+		for(int i = 0; i < loe.getfeatures().length; i++) {
+			retVal.add(loe.getfeatures()[i]);
+		}
+		return retVal;
+	}
+
+
+	/**
+	 * Gets the remainder of the particular attribute 
+	 * @param a
+	 * @param set
+	 * @return
+	 */
 	public static double getRemainder(BinaryFeature a, ListOfExamples set) {
 		int totalExamples = set.size();
 		int index = getIndexOfFeature(set,a.getName());
-		//System.out.println(index);
 
 		//first value 
 		int numFirstVal = attributeInFeatureCnt(a.getFirstValue(), set, index);
-		int numAttFromLabel1_1 = set.getAttributeForLabelCnt(set.getOutputLabels().getFirstValue(), index , a.getFirstValue());
-		//System.out.println(numFirstVal);
-		int numAttFromLabel2_1 = set.getAttributeForLabelCnt(set.getOutputLabels().getSecondValue(), index, a.getFirstValue());		
-		double infoNeeded1 = infoNeeded((double)numAttFromLabel1_1/numFirstVal,(double)numAttFromLabel2_1/numFirstVal);
-		//System.out.println();
+		int numAttFromLabel1_1 = set.getAttributeForLabelCnt(set.getOutputLabels().getFirstValue(),
+				index , a.getFirstValue());
+		int numAttFromLabel2_1 = set.getAttributeForLabelCnt(set.getOutputLabels().getSecondValue(),
+				index, a.getFirstValue());		
+		double infoNeeded1 = 
+				infoNeeded((double)numAttFromLabel1_1/numFirstVal,(double)numAttFromLabel2_1/numFirstVal);
+
 		//second value 
 		int numSecondVal = attributeInFeatureCnt(a.getSecondValue(), set, index);
-		int numAttFromLabel1_2 = set.getAttributeForLabelCnt(set.getOutputLabels().getFirstValue(), index , a.getSecondValue());
-		int numAttFromLabel2_2 = set.getAttributeForLabelCnt(set.getOutputLabels().getSecondValue(), index , a.getSecondValue());
-		double infoNeeded2 = infoNeeded((double)numAttFromLabel1_2/numSecondVal, (double)numAttFromLabel2_2/numSecondVal);
-		//System.out.println(infoNeeded2);
+		int numAttFromLabel1_2 = 
+				set.getAttributeForLabelCnt(set.getOutputLabels().getFirstValue(), index , a.getSecondValue());
+		int numAttFromLabel2_2 = 
+				set.getAttributeForLabelCnt(set.getOutputLabels().getSecondValue(), index , a.getSecondValue());
+		double infoNeeded2 =
+				infoNeeded((double)numAttFromLabel1_2/numSecondVal, (double)numAttFromLabel2_2/numSecondVal);
+
 		return (((double)numFirstVal/totalExamples)*infoNeeded1) + ((double)numSecondVal/totalExamples)*infoNeeded2; 
 	}
 
 
+	/**
+	 * Gets the majority value for tie breaker 
+	 * @param loe
+	 * @return
+	 */
 	public static String getPluralityValue(ListOfExamples loe) {
 		int maxCnt = 0; 
 		String retVal = null;
@@ -170,15 +333,52 @@ public class BuildAndTestDecisionTree
 		return firstLabelCnt > secondLabelCnt ? firstLabel : secondLabel;
 	}
 
-
-	//info remaining for one value per attribute/feature 
-	@SuppressWarnings("unused")
-	private static double infoRemaining(double numPos, double numNeg, double numExamples, double count ) {
-		if(count == 0 || numExamples == 0) return 0;
-		return (double)(count/numExamples) * infoNeeded((double)numPos/count,(double)numNeg/count) ;
+	/**
+	 * Checks if given set of examples have single classification. 
+	 * @param loe
+	 * @return
+	 */
+	public static boolean hasSingleClass(ListOfExamples loe) {
+		Set<String> test = new HashSet<String>();
+		for(int i = 0; i < loe.size(); i++) {
+			test.add(loe.get(i).getLabel());
+		}
+		if (test.size() < 2) {
+			return true; 
+		}
+		return false; 
 	}
 
-	//information needed calculation
+
+	/**
+	 * Filters examples by particular attribute
+	 * @param loe
+	 * @param feature
+	 * @param val
+	 * @return
+	 */
+	public static ListOfExamples getExamplesForAttribute(ListOfExamples loe, String feature, String val) {
+		ListOfExamples retVal = new ListOfExamples();
+		for(int i = 0; i < loe.size(); i++ ) {
+			Example ex = loe.get(i);
+			if(ex.get(getIndexOfFeature(loe,feature)).equalsIgnoreCase(val)) {
+				retVal.add(ex);
+			}
+		}
+		retVal.setOutputLabel(loe.getOutputLabels());
+		retVal.setFeatures(loe.getfeatures());
+		retVal.setNumFeatures(loe.getNumberOfFeatures());
+		retVal.setNumExamples(retVal.size());
+		return retVal;
+	}
+
+
+	/**
+	 * Calculates information needed for given positive and negative input 
+	 * @param pos
+	 * @param neg
+	 * @return
+	 */
 	private static double infoNeeded(double pos, double neg) {
 		if(pos == 0 || neg == 0) {
 			return 0.0;
@@ -186,8 +386,14 @@ public class BuildAndTestDecisionTree
 		return (double)(-1*pos*log2(pos))+(-1*neg*log2(neg));
 	}
 
+	/**
+	 * Counts the number of particular value in feature 
+	 * @param value
+	 * @param set
+	 * @param idx
+	 * @return
+	 */
 	public static int attributeInFeatureCnt(String value, ListOfExamples set, int idx) {
-		//System.out.println(value +" "+idx);
 		int retVal = 0;
 		for(int i = 0; i < set.size(); i++) { //all examples 
 			if(set.get(i).get(idx).equalsIgnoreCase(value)) {
@@ -212,7 +418,12 @@ public class BuildAndTestDecisionTree
 		return -1;
 	}
 
-	//log2 function
+
+	/**
+	 * log2 function
+	 * @param f
+	 * @return
+	 */
 	public static final double log2(double f)
 	{
 		return (Math.log(f)/Math.log(2.0));
@@ -274,6 +485,124 @@ class Example extends ArrayList<String>
 	}
 }
 
+
+/**
+ * Represents single node in decision tree 
+ * @author Shyamal
+ *
+ */
+class DecisionTreeNode extends DecisionTree  {
+
+	DecisionTreeNode leftSubTree, rightSubTree = null;
+	String type, leftBranch, rightBranch, outLabel;
+
+	BinaryFeature a; 
+	//examples for this node
+	ListOfExamples loe = null;
+	//remaining features 
+	List<BinaryFeature> features = null;
+
+	public DecisionTreeNode(BinaryFeature bf, ListOfExamples exs, String typ) {
+		this.a = bf;
+		this.loe = exs;
+		this.type = typ;
+	}
+
+	public DecisionTreeNode(String typ, String label) {
+		this.type = typ;
+		this.outLabel = label;
+	}
+
+	void setExamples(ListOfExamples in) {
+		this.loe = in;
+	}
+
+	BinaryFeature getFeature() { return this.a;}
+	ListOfExamples getExamples() { return this.loe; }
+
+	String getLabel(){
+		return this.outLabel;
+	}
+
+	void setType(String typ){
+		this.type = typ;
+	}
+
+	String getType(){
+		return this.type;
+	}
+
+	int getTreeSize() {
+		if(this.type.equalsIgnoreCase("leaf")) {
+			return 1;
+		}
+		else return 1 + leftSubTree.getTreeSize() + rightSubTree.getTreeSize();
+	}
+
+
+	int maxDepth() {
+		if(this.type.equalsIgnoreCase("leaf")) {
+			return 1;
+		}
+		else return 1 + leftSubTree.maxDepth() + rightSubTree.maxDepth();
+	}
+
+
+	int numLeafNodes() {
+		if(this.type.equalsIgnoreCase("leaf")) {
+			return 1;
+		}
+		else return leftSubTree.numLeafNodes() + rightSubTree.numLeafNodes();
+	}
+
+	int numInteriorNodes() {
+		if(this.type.equalsIgnoreCase("leaf")) {
+			return 0;
+		}
+		else return 1 + leftSubTree.numInteriorNodes() +
+				rightSubTree.numInteriorNodes();
+	}
+
+	void setLeftTree(DecisionTreeNode left) {
+		this.leftSubTree = left;
+	}
+
+	void setRightTree(DecisionTreeNode right) {
+		this.rightSubTree = right;
+	}
+
+	void setRightBranch(String rb) {
+		this.rightBranch = rb;
+	}
+
+	void setLeftBranch(String lb) {
+		this.leftBranch = lb; 
+	}
+
+	String getRightBranch() {return this.rightBranch;}
+	String getLeftBranch() {return this.leftBranch;}
+
+	public DecisionTreeNode getRightTree() {
+		return this.rightSubTree;
+	}
+
+	public DecisionTreeNode getLeftTree() {
+		return this.leftSubTree;
+	}
+}
+
+/**
+ * Abstract DecisionTree class for important recursive methods. 
+ * @author Shyamal 
+ *
+ */
+abstract class DecisionTree{
+	abstract int getTreeSize();
+	abstract int maxDepth();
+	abstract int numLeafNodes();
+	abstract int numInteriorNodes();
+}
+
 /* This class holds all of our examples from one dataset
    (train OR test, not BOTH).  It extends the ArrayList class.
    Be sure you're not confused.  We're using TWO types of ArrayLists.  
@@ -316,13 +645,39 @@ class ListOfExamples extends ArrayList<Example>
 			System.out.println("   " + f.getName() + " (" + f.getFirstValue() +
 					" or " + f.getSecondValue() + ")");
 		}
-		//System.out.println("Positive Label Count: "+getLabelCount("pos"));
-		//System.out.printl(getRemainder(features[0],features[0].getFirstValue()));
+	}
 
+	public int getNumFeatures(){
+		return this.numFeatures;
+	}
 
+	public BinaryFeature[] getFeatures() {
+		return this.features;
+	}
+
+	public void setFeatures(BinaryFeature[] a) {
+		this.features = a; 
+	}
+	public void setNumFeatures(int num){
+		this.numFeatures = num;
+	}
+	public int getNumExamples() {
+		return this.numExamples;
+	}
+	public void setNumExamples(int exs){
+		this.numExamples = exs; 
+	}
+
+	public void setOutputLabel(BinaryFeature label) {
+		this.outputLabel = label;
 	}
 
 
+	/**
+	 * Gets count of a particular label from set of examples 
+	 * @param label
+	 * @return
+	 */
 	public int getLabelCount(String label) {
 		int count = 0; 
 		for(int i = 0; i < size(); i++) {
@@ -337,10 +692,13 @@ class ListOfExamples extends ArrayList<Example>
 		return this.outputLabel;
 	}
 
-
-
-
-
+	/**
+	 * Gets count for particular attribute from label 
+	 * @param label
+	 * @param index
+	 * @param attrVal
+	 * @return
+	 */
 	// eg : 4 of the red are possitive 
 	public int getAttributeForLabelCnt(String label, int index, String attrVal) {
 		int retVal = 0;
@@ -353,8 +711,9 @@ class ListOfExamples extends ArrayList<Example>
 		return retVal;
 	}
 
-
-
+	public void filterExample(Example ex){
+		this.remove(ex);
+	}
 
 	// Print out ALL the examples.
 	public void PrintAllExamples()
@@ -505,7 +864,6 @@ class ListOfExamples extends ArrayList<Example>
 				return line;
 			}
 		}
-
 		// If the file is in proper format, this should never happen.
 		System.err.println("Unexpected problem in findSignificantLine.");
 
@@ -528,7 +886,6 @@ class ListOfExamples extends ArrayList<Example>
 		if(line.length() > 2 && line.substring(0,2).equals("//")) {
 			return false;
 		}
-
 		return true;
 	}
 }
