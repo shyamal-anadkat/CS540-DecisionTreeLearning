@@ -4,43 +4,19 @@ import java.io.*;
 ////////////////////////////////////////////////////////////////////////////
 // Shyamal Anadkat                                      
 // Code for HW1, Problem 2
-//               Inducing Decision Trees
-//               CS540 (Shavlik)
-//                                                                        
+// Inducing Decision Trees
+// CS540 (Shavlik)                                                                   
 ////////////////////////////////////////////////////////////////////////////
 
 /* BuildAndTestDecisionTree.java 
    To run after compiling, type:
-     java BuildAndTestDecisionTree <trainsetFilename> <testsetFilename>
-   Notes:  
-
-           Please place all your HW1 code in a single file. 
-
-           All that is required is that you keep the name of the
-           BuildAndTestDecisionTree class and don't change the 
-           calling convention for its main function.  
-
-           There is no need to worry about "error detection" when reading data files.
-           We'll be responsible for that.  HOWEVER, DO BE AWARE THAT
-           WE WILL USE ONE OR MORE DIFFERENT DATASETS DURING TESTING,
-           SO DON'T WRITE CODE THAT IS SPECIFIC TO THE PROVIDED
-           DATASETS.  (As  stated above, you may assume that our additional datasets
-           are properly formatted in the style used for the provided dataset.)
-
-           A weakness of our design is that the category and feature
-           names are defined in BOTH the train and test files.  These
-           names MUST match, though this isn't checked.  However,
-           we'll live with the weakness because it reduces complexity
-           overall (note: you can use the SAME filename for both the
-           train and the test set, as a debugging method; you should
-           get ALL the test examples correct in this case, since we are
-	   not "pruning" decision trees to avoid overfitting the training data).
- */
+     java BuildAndTestDecisionTree <trainsetFilename> <testsetFilename>*/
 
 public class BuildAndTestDecisionTree
 {
 
 	public static void main(String[] args)
+
 	{   
 		if (args.length != 2)
 		{
@@ -66,58 +42,28 @@ public class BuildAndTestDecisionTree
 		}
 		else
 		{ 
-			/* The following is included so you can see the data organization.
-         You'll need to REPLACE it with code that:
-
-          1) uses the TRAINING SET of examples to build a decision tree
-
-          2) prints out the induced decision tree (using simple, indented 
-             ASCII text)
-
-          3) categorizes the TESTING SET using the induced tree, reporting
-             which examples were INCORRECTLY classified, as well as the
-             FRACTION that were incorrectly classified.
-             Just print out the NAMES of the examples incorrectly classified
-             (though during debugging you might wish to print out the full
-             example to see if it was processed correctly by your decision 
-             tree)       
-			 */
-			//System.out.println(infoRemaining(1,1,1,2));
 			//trainExamples.DescribeDataset();
-			testExamples.DescribeDataset();
-			//trainExamples.PrintThisExample(0);  // Print out an example
-			//trainExamples.PrintAllExamples(); // Don't waste paper printing all 
-			// of this out!
-			//System.out.println(getIndexOfFeature(trainExamples,"weight"));
-			//System.out.println(trainExamples.getAttributeForLabelCnt("neg", "Y"));
-			//System.out.println(infoNeeded((double)1/3,(double)2/3));
-			System.out.println("Remainder for "+
-					trainExamples.getfeatures()[0].getName()+":"+getRemainder(trainExamples.getfeatures()[0],trainExamples));
-			System.out.println("Remainder for "+
-					trainExamples.getfeatures()[1].getName()+":"+getRemainder(trainExamples.getfeatures()[1],trainExamples));
-			System.out.println("Remainder for "+
-					trainExamples.getfeatures()[2].getName()+":"+getRemainder(trainExamples.getfeatures()[2],trainExamples));
-			//testExamples.PrintAllExamples();  // Instead, just view it on the screen
-			//System.out.println(getBestAttribute(trainExamples).getName());
-			//System.out.println(getPluralityValue(trainExamples));
-			//System.out.println(attributeInFeatureCnt("R", trainExamples, 0)); //WORKS !!!!
-			//System.out.println(hasSingleClass(trainExamples));
-			//System.out.println(getExamplesForAttribute(trainExamples,"weight", "Li8"));
+			//testExamples.DescribeDataset();
+			System.out.println("Building and Learning Decision Tree");
 			DecisionTreeNode dtn = decisionTreeLearning(trainExamples,getAllFeatures(trainExamples), trainExamples);
-			System.out.println("-------------------------------------------");
-			printDTree(dtn);
-			System.out.println("--------------------------");
-			for(int i = 0; i < 20; i ++) {
-				System.out.println(classifyExample(testExamples.get(i),dtn,trainExamples));
-			}
+			System.out.println("------------------PRINTING TREE BELOW-------------------------");
+			printDTree(dtn,0);
+			System.out.println("-------------------------------------------\n");
+			System.out.println("Statistics for Train Data ("+trainset+") : ");
+			System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
+			System.out.println("Failed Examples for Train Data: "+testDecisionTree(trainExamples,dtn).toString());
+			System.out.println("Statistics for Test Data ("+testset+") : ");
+			System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
+			System.out.println("Failed Examples for Test Data: "+testDecisionTree(testExamples,dtn).toString());
 			//System.out.println(dtn.getTreeSize());
 		}
-
+		System.out.println("---------------------------------");
 		Utilities.waitHere("Hit <enter> when ready to exit.");
 	}
 
 	/**
 	 * ID3 algorithm to build and learn decision tree
+	 * Reference : Fig 18.5 of textbook; Jude Shavlik 2016
 	 * @param examples
 	 * @param attributes
 	 * @param parent_egs
@@ -150,7 +96,6 @@ public class BuildAndTestDecisionTree
 			List<BinaryFeature> leftF = getRemainingFeatures(bestF, attributes);
 			DecisionTreeNode root = new DecisionTreeNode(bestF,examples,"in");
 
-
 			//for value one of bestF
 			root.setLeftBranch(bestF.getFirstValue());
 			//System.out.println("LEFT BRANCH: "+root.getLeftBranch());
@@ -158,7 +103,6 @@ public class BuildAndTestDecisionTree
 			DecisionTreeNode leftSubTree = decisionTreeLearning(exs,leftF,examples);
 			leftSubTree.setType("in");
 			root.setLeftTree(leftSubTree);
-
 
 			//for value two of bestF
 			root.setRightBranch(bestF.getSecondValue());
@@ -176,24 +120,50 @@ public class BuildAndTestDecisionTree
 	 * Prints decision tree given root 
 	 * @param root
 	 */
-	private static void printDTree(DecisionTreeNode root) {
-
+	private static void printDTree(DecisionTreeNode root, int depth) {
 		if(root == null) {return;}
 
 		if (root.getType().equalsIgnoreCase("leaf") || root.getLeftTree() == null || root.getRightTree() == null) {
-			System.out.println("leaf: "+root.getLabel());
+			System.out.println("leaf: "+root.getLabel()+"\n");
 		} 
 		else {
-			System.out.println("\t("+root.getFeature().getName()+")");
+			for(int i = 0; i < depth; i++) {System.out.print("   ");}
+			System.out.println("FEATURE: ("+root.getFeature().getName()+")");
 			System.out.println("left branch: "+root.getLeftBranch());
-			printDTree(root.getLeftTree());
+			printDTree(root.getLeftTree(),(depth+1));
 
-			System.out.println("\t("+root.getFeature().getName()+")");
-			System.out.println("right branch: "+root.getRightBranch());
-			printDTree(root.getRightTree());
+			for(int i = 0; i < depth; i++) {System.out.print("   ");}
+			System.out.println("FEATURE: ("+root.getFeature().getName()+")");
+			System.out.println("\t\t\t\tright branch: "+root.getRightBranch());
+			printDTree(root.getRightTree(),(depth+1));
 		}
 	}
 
+	/**
+	 * tests the decision tree against given set of data 
+	 * @param testData
+	 * @param root
+	 * @return
+	 */
+	public static List<String> testDecisionTree(ListOfExamples testData, DecisionTreeNode root) {
+		List<String> failed = new ArrayList<String>();
+		int passed = 0; 
+		// get total of testData examples 
+		// extract label, pass example and classify and compare 
+		// if comparison match, increememnt counter 
+		// calculate percent successes
+		// keep track of examples which failed so u can print later 
+		for(int i = 0; i < testData.size(); i++) {
+			Example ex = testData.get(i);
+			if(ex.getLabel().equalsIgnoreCase(classifyExample(ex,root,testData))) {
+				passed++;
+			}else {
+				failed.add(ex.getName());
+			}
+		}
+		System.out.println("Percent Success: "+(double)passed/testData.size()*100+"%");
+		return failed;
+	}
 
 	/**
 	 * Classifies a single given example, returns classification
@@ -229,8 +199,6 @@ public class BuildAndTestDecisionTree
 		}
 		return label;
 	}
-
-
 
 	/**
 	 * Determines best attribute from a list of examples 
@@ -650,7 +618,6 @@ class ListOfExamples extends ArrayList<Example>
 	public int getNumFeatures(){
 		return this.numFeatures;
 	}
-
 	public BinaryFeature[] getFeatures() {
 		return this.features;
 	}
@@ -667,7 +634,6 @@ class ListOfExamples extends ArrayList<Example>
 	public void setNumExamples(int exs){
 		this.numExamples = exs; 
 	}
-
 	public void setOutputLabel(BinaryFeature label) {
 		this.outputLabel = label;
 	}
@@ -688,6 +654,10 @@ class ListOfExamples extends ArrayList<Example>
 		return count;
 	}
 
+	/**
+	 * Get output label 
+	 * @return
+	 */
 	public BinaryFeature getOutputLabels() {
 		return this.outputLabel;
 	}
@@ -699,7 +669,7 @@ class ListOfExamples extends ArrayList<Example>
 	 * @param attrVal
 	 * @return
 	 */
-	// eg : 4 of the red are possitive 
+	// eg : 4 of the red are positive 
 	public int getAttributeForLabelCnt(String label, int index, String attrVal) {
 		int retVal = 0;
 		for(int i = 0; i < size(); i ++) {
@@ -866,7 +836,6 @@ class ListOfExamples extends ArrayList<Example>
 		}
 		// If the file is in proper format, this should never happen.
 		System.err.println("Unexpected problem in findSignificantLine.");
-
 		return null;
 	}
 
