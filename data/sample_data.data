@@ -1,0 +1,21 @@
+// num features
+3
+
+// features
+feat1 - T F
+feat2 - T F
+feat3 - T F
+
+// labels
+positive
+negative
+
+// num examples
+5
+
+// examples
+trainEx1 positive T F T
+trainEx2 positive T F F
+trainEx3 positive T T T
+trainEx4 negative F F T
+trainEx5 negative F T F

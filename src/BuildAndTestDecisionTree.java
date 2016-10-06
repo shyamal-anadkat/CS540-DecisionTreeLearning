@@ -42,12 +42,13 @@ public class BuildAndTestDecisionTree
 		}
 		else
 		{ 
-			//trainExamples.DescribeDataset();
+			trainExamples.DescribeDataset();
 			//testExamples.DescribeDataset();
+			//System.out.println(getBestAttribute(trainExamples,new ArrayList<BinaryFeature>(){}));
 			System.out.println("Building and Learning Decision Tree");
 			DecisionTreeNode dtn = decisionTreeLearning(trainExamples,getAllFeatures(trainExamples), trainExamples);
 			System.out.println("------------------PRINTING TREE BELOW-------------------------");
-			printDTree(dtn,0);
+			//printDTree(dtn,0);
 			System.out.println("-------------------------------------------\n");
 			System.out.println("Statistics for Train Data ("+trainset+") : ");
 			System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
@@ -210,7 +211,8 @@ public class BuildAndTestDecisionTree
 		double leastRemainder = Integer.MAX_VALUE; //or max info gain
 		for(int i = 0; i < remaining.size(); i++) {
 			BinaryFeature temp= remaining.get(i);
-			best = leastRemainder >= getRemainder(temp, in) ? temp:best;
+			best = leastRemainder > getRemainder(temp, in) ? temp:best;
+			//System.out.println(best.getName());
 			leastRemainder = getRemainder(temp,in);
 		}
 		return best;
