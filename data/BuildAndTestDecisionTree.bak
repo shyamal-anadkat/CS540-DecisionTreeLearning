@@ -3,61 +3,61 @@ import java.io.*;
 
 ////////////////////////////////////////////////////////////////////////////
 // Shyamal H Anadkat                                    
+// Code for HW1, Problem 2
 // Inducing Decision Trees
 // CS540 (Shavlik)                                                                   
 ////////////////////////////////////////////////////////////////////////////
 
+/* BuildAndTestDecisionTree.java 
+   To run after compiling, type:
+     java BuildAndTestDecisionTree <trainsetFilename> <testsetFilename>*/
 
 public class BuildAndTestDecisionTree
 {
-	static String [][] tuneD = new String[102][298*101];
-	static String [][] testD = new String[102][298*101];
 
 	public static void main(String[] args)
 
 	{   
-		System.out.println("ENSEMBLING...");
-		ListOfExamples tuneSet = new ListOfExamples();
-		ListOfExamples testSet = new ListOfExamples();
-		tuneSet.ReadInExamplesFromFile("data/red-wine-quality-tune.data");
-		testSet.ReadInExamplesFromFile("data/red-wine-quality-test.data");
+		if (args.length != 2)
+		{
+			System.err.println("You must call BuildAndTestDecisionTree as " + 
+					"follows:\n\njava BuildAndTestDecisionTree " + 
+					"<trainsetFilename> <testsetFilename>\n");
+			System.exit(1);
+		}    
 
 		// Read in the file names.
-		for(int i = 1; i <= 101 ;i++){
-			ListOfExamples data = new ListOfExamples();
-			if(!data.ReadInExamplesFromFile("data/wine-bagged/wine-b-"+i+".data")) {
-				System.err.println("Something went wrong reading the datasets ... " +
-						"giving up.");
-				System.exit(1);
-			}
-			else {
-				//train this data 
-				DecisionTreeNode dtn = decisionTreeLearning(data,getAllFeatures(data), data);
-				//testDecisionTree(data,dtn).toString();
-				//collect predictions on each of the tune set and test set 
-				for(int j = 0; j < data.size(); j++) {
-					Example ex = data.get(j);
-					String outputForTest = classifyExample(ex,dtn,testSet);
-					String outputForTune = classifyExample(ex,dtn,tuneSet);
-					testD[i-1][j] = outputForTest;
-					tuneD[i-1][j] = outputForTune;
-				}
-			}
+		String trainset = args[0];
+		String testset  = args[1];
+
+		// Read in the examples from the files.
+		ListOfExamples trainExamples = new ListOfExamples();
+		ListOfExamples testExamples  = new ListOfExamples();
+		if (!trainExamples.ReadInExamplesFromFile(trainset) ||
+				!testExamples.ReadInExamplesFromFile(testset))
+		{
+			System.err.println("Something went wrong reading the datasets ... " +
+					"giving up.");
+			System.exit(1);
 		}
-		//trainExamples.DescribeDataset();
-		//testExamples.DescribeDataset();
-		//System.out.println("Building and Learning Decision Tree");
-		//DecisionTreeNode dtn = decisionTreeLearning(trainExamples,getAllFeatures(trainExamples), trainExamples);
-		//System.out.println("------------------PRINTING TREE BELOW-------------------------");
-		//printDTree(dtn,0);
-		//System.out.println("-------------------------------------------\n");
-		//System.out.println("Statistics for Train Data ("+trainset+") : ");
-		//System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
-		//System.out.println("Failed Examples for Train Data: "+testDecisionTree(trainExamples,dtn).toString());
-		//System.out.println("Statistics for Test Data ("+testset+") : ");
-		//System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
-		//System.out.println("Failed Examples for Test Data: "+testDecisionTree(testExamples,dtn).toString());
-		//System.out.println(dtn.getTreeSize());
+		else
+		{ 
+			trainExamples.DescribeDataset();
+			//testExamples.DescribeDataset();
+			//System.out.println(getBestAttribute(trainExamples,new ArrayList<BinaryFeature>(){}));
+			System.out.println("Building and Learning Decision Tree");
+			DecisionTreeNode dtn = decisionTreeLearning(trainExamples,getAllFeatures(trainExamples), trainExamples);
+			System.out.println("------------------PRINTING TREE BELOW-------------------------");
+			printDTree(dtn,0);
+			System.out.println("-------------------------------------------\n");
+			System.out.println("Statistics for Train Data ("+trainset+") : ");
+			System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
+			System.out.println("Failed Examples for Train Data: "+testDecisionTree(trainExamples,dtn).toString());
+			System.out.println("Statistics for Test Data ("+testset+") : ");
+			System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
+			System.out.println("Failed Examples for Test Data: "+testDecisionTree(testExamples,dtn).toString());
+			//System.out.println(dtn.getTreeSize());
+		}
 		System.out.println("---------------------------------");
 		Utilities.waitHere("Hit <enter> when ready to exit.");
 	}
@@ -166,19 +166,6 @@ public class BuildAndTestDecisionTree
 		return failed;
 	}
 
-	public static String[] returnPredictions(ListOfExamples loe, DecisionTreeNode root) {
-		String[] retVal = new String[2];
-
-		for(int i = 0; i < loe.size(); i ++) {
-			Example ex = loe.get(i);
-
-
-		}
-
-
-		return retVal;
-	}
-
 	/**
 	 * Classifies a single given example, returns classification
 	 * @param in
@@ -225,6 +212,7 @@ public class BuildAndTestDecisionTree
 		for(int i = 0; i < remaining.size(); i++) {
 			BinaryFeature temp= remaining.get(i);
 			best = leastRemainder > getRemainder(temp, in) ? temp:best;
+			//System.out.println(best.getName());
 			leastRemainder = getRemainder(temp,in);
 		}
 		return best;

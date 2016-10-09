@@ -1,0 +1,35 @@
+// there will be recursion on both the branches
+
+// feat1 = T
+// |  feat2 = F: positive
+// |  feat2 = T: negative
+// feat1 = F
+// |  feat3 = T: negative
+// |  feat3 = F: positive
+
+// num features
+3
+
+// features
+feat1 - T F
+feat2 - T F
+feat3 - T F
+
+// labels
+positive
+negative
+
+// num examples
+8
+
+// examples
+
+trainEx1 positive T F T
+trainEx2 positive T F F
+trainEx3 positive T F T
+trainEx4 negative T T F
+
+trainEx5 negative F F T
+trainEx6 negative F T T
+trainEx7 negative F F T
+trainEx8 positive F T F
