@@ -10,40 +10,78 @@ import java.io.*;
 
 public class BuildAndTestDecisionTree
 {
-	static String [][] tuneD = new String[102][298*101];
-	static String [][] testD = new String[102][298*101];
+	static String [][] tuneD = new String[101][298];
+	static String [][] testD = new String[101][298];
+	static ListOfExamples tuneSet = new ListOfExamples(); 
+	static ListOfExamples testSet = new ListOfExamples();
+	static List<Double> testAcc = new ArrayList<Double>();
+	static List<Double> tuneAcc = new ArrayList<Double>();
+	static boolean debug = false;
 
 	public static void main(String[] args)
 
 	{   
 		System.out.println("ENSEMBLING...");
-		ListOfExamples tuneSet = new ListOfExamples();
-		ListOfExamples testSet = new ListOfExamples();
+
+		//initialize and read tune and testset examples for red-wine-quality. 
 		tuneSet.ReadInExamplesFromFile("data/red-wine-quality-tune.data");
 		testSet.ReadInExamplesFromFile("data/red-wine-quality-test.data");
 
+
+		System.out.println("DONE READING TUNE AND TEST SET...");
+
 		// Read in the file names.
+		/* Learn 101 decision trees, and store labels for tune and test set in two 2D arrays 
+		 * with i being tree number and j being that example from test/tune set. 
+		 */
 		for(int i = 1; i <= 101 ;i++){
 			ListOfExamples data = new ListOfExamples();
+
 			if(!data.ReadInExamplesFromFile("data/wine-bagged/wine-b-"+i+".data")) {
 				System.err.println("Something went wrong reading the datasets ... " +
 						"giving up.");
 				System.exit(1);
 			}
-			else {
-				//train this data 
-				DecisionTreeNode dtn = decisionTreeLearning(data,getAllFeatures(data), data);
-				//testDecisionTree(data,dtn).toString();
-				//collect predictions on each of the tune set and test set 
-				for(int j = 0; j < data.size(); j++) {
-					Example ex = data.get(j);
-					String outputForTest = classifyExample(ex,dtn,testSet);
-					String outputForTune = classifyExample(ex,dtn,tuneSet);
-					testD[i-1][j] = outputForTest;
-					tuneD[i-1][j] = outputForTune;
-				}
+			//train,learn this data 
+			DecisionTreeNode dtn = decisionTreeLearning(data,getAllFeatures(data), data);
+			//testDecisionTree(tuneSet,dtn).toString();
+			//collect predictions on each of the tune set and test set 
+			for(int j = 0; j < testSet.size(); j++) {
+
+				Example exTest = testSet.get(j);
+				Example exTune = tuneSet.get(j);
+
+				String outputForTest = classifyExample(exTest,dtn,testSet);
+				String outputForTune = classifyExample(exTune,dtn,tuneSet);
+
+				testD[i-1][j] = outputForTest;
+				tuneD[i-1][j] = outputForTune;
 			}
 		}
+
+
+
+		//for each example
+		for (int i = 0; i < testSet.size(); i++) {
+			//for each combination of L trees 
+			List<String> temp = new ArrayList<String>();
+			
+			//get predictions for that example on L combination on 101 trees and calculate accuracy 
+			
+			for(int l = 1; l <= 101; l=l+2) {
+				System.out.println(countPredictions(testD, "lowToMid",i));
+				if(countPredictions(testD, "lowToMid",i) >= l) {
+					temp.add("lowToMid");
+				} else {
+					temp.add("midToHigh");
+				}
+			}
+			testAcc.add(getAccuracy(testSet, temp));
+		}
+
+		if(debug) {
+		//System.out.println(testAcc.toString());
+		//System.out.println(Arrays.toString(a)));
 		//trainExamples.DescribeDataset();
 		//testExamples.DescribeDataset();
 		//System.out.println("Building and Learning Decision Tree");
@@ -58,6 +96,8 @@ public class BuildAndTestDecisionTree
 		//System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
 		//System.out.println("Failed Examples for Test Data: "+testDecisionTree(testExamples,dtn).toString());
 		//System.out.println(dtn.getTreeSize());
+		}
+		
 		System.out.println("---------------------------------");
 		Utilities.waitHere("Hit <enter> when ready to exit.");
 	}
@@ -118,7 +158,8 @@ public class BuildAndTestDecisionTree
 	}
 
 	/**
-	 * Prints decision tree given root 
+	 * Prints decision tree given root
+	 * depth is not something used at the moment 
 	 * @param root
 	 */
 	private static void printDTree(DecisionTreeNode root, int depth) {
@@ -141,6 +182,25 @@ public class BuildAndTestDecisionTree
 	}
 
 	/**
+	 * To count num of given prediction for all 101 trees for single example TODO 
+	 * @param in
+	 * @param prediction
+	 * @return
+	 */
+	private static int countPredictions(String[][] in, String prediction, int ex) {
+		//i of in in tree num and j is example num 
+		//System.out.println(in.length+" "+in[0].length);
+		int retVal = 0; 
+		for(int j = 0; j < in.length ; j++) {
+			if (in[j][ex].equalsIgnoreCase(prediction)) {
+				retVal++;
+			}
+		}
+
+		return retVal;
+	}
+
+	/**
 	 * tests the decision tree against given set of data 
 	 * @param testData
 	 * @param root
@@ -151,7 +211,7 @@ public class BuildAndTestDecisionTree
 		int passed = 0; 
 		// get total of testData examples 
 		// extract label, pass example and classify and compare 
-		// if comparison match, increememnt counter 
+		// if comparison match, incrememnt counter 
 		// calculate percent successes
 		// keep track of examples which failed so u can print later 
 		for(int i = 0; i < testData.size(); i++) {
@@ -162,8 +222,27 @@ public class BuildAndTestDecisionTree
 				failed.add(ex.getName());
 			}
 		}
+		//printing out the perent accuracy here, but a seperate method has been done below
 		System.out.println("Percent Success: "+(double)passed/testData.size()*100+"%");
 		return failed;
+	}
+
+	/**
+	 * To calculate accurancy of list of predictions against list of examples 
+	 * @param loe
+	 * @param predictions
+	 * @return
+	 */
+	public static Double getAccuracy(ListOfExamples loe, List<String> predictions) {
+		int cnt = 0;
+		for (Example ex: loe) {
+			for(String x: predictions) {
+				if(ex.getLabel().equalsIgnoreCase(x)) {
+					cnt++;
+				}
+			}
+		}
+		return (double)cnt/loe.size()*100;
 	}
 
 	public static String[] returnPredictions(ListOfExamples loe, DecisionTreeNode root) {
@@ -171,11 +250,7 @@ public class BuildAndTestDecisionTree
 
 		for(int i = 0; i < loe.size(); i ++) {
 			Example ex = loe.get(i);
-
-
 		}
-
-
 		return retVal;
 	}
 
@@ -248,7 +323,7 @@ public class BuildAndTestDecisionTree
 	}
 
 	/**
-	 * 
+	 * Get all features from list of examples 
 	 * @param loe
 	 * @return
 	 */
@@ -575,6 +650,7 @@ class DecisionTreeNode extends DecisionTree  {
 
 /**
  * Abstract DecisionTree class for important recursive methods. 
+ * (methods have to be implemented at some point)
  * @author Shyamal 
  *
  */
@@ -683,7 +759,7 @@ class ListOfExamples extends ArrayList<Example>
 	 * @param attrVal
 	 * @return
 	 */
-	// eg : 4 of the red are positive 
+	//eg : 4 of the red are positive 
 	public int getAttributeForLabelCnt(String label, int index, String attrVal) {
 		int retVal = 0;
 		for(int i = 0; i < size(); i ++) {
@@ -807,6 +883,10 @@ class ListOfExamples extends ArrayList<Example>
 		}
 	}
 
+	/**
+	 * Parse example from Scanner 
+	 * @param fileScanner
+	 */
 	private void parseExamples(Scanner fileScanner) {
 		// Parse the expected number of examples.
 		for(int i = 0; i < numExamples; i++) {
@@ -828,7 +908,6 @@ class ListOfExamples extends ArrayList<Example>
 				String feature = lineScanner.next();
 				ex.addFeatureValue(feature);
 			}
-
 			// Add this example to the list.
 			this.add(ex);
 		}

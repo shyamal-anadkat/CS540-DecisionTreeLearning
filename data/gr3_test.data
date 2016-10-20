@@ -1,0 +1,32 @@
+// grading test set 3
+
+// all of these should be classified CORRECTLY by the tree (100% accuracy)
+
+// feat1 = T
+// |  feat2 = F: positive
+// |  feat2 = T: negative
+// feat1 = F
+// |  feat3 = T: negative
+// |  feat3 = F: positive
+
+// num features
+3
+
+// features
+feat1 - T F
+feat2 - T F
+feat3 - T F
+
+// labels
+positive
+negative
+
+// num examples
+5
+
+// examples
+testEx1 positive T F F
+testEx2 negative T T T
+testEx3 positive F F F
+testEx4 negative F F T
+testEx5 positive T F T

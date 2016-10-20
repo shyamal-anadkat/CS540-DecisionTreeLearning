@@ -1,0 +1,25 @@
+// grading test set 1
+
+// these examples should be classified CORRECTLY by the tree
+
+// feat1 = T: positive
+// feat1 = F: negative
+
+// num features
+3
+
+// features
+feat1 - T F
+feat2 - T F
+feat3 - T F
+
+// labels
+positive
+negative
+
+// num examples
+2
+
+// examples
+testEx1 negative F F T
+testEx2 positive T F T

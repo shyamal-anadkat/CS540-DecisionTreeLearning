@@ -1,0 +1,34 @@
+// grading train set 2
+
+// there will be recursion on the left branch, but not the right branch
+
+// feat1 = T
+// |  feat2 = F: positive
+// |  feat2 = T: negative
+// feat1 = F: negative
+
+// num features
+3
+
+// features
+feat1 - T F
+feat2 - T F
+feat3 - T F
+
+// labels
+positive
+negative
+
+// num examples
+7
+
+// examples
+trainEx1 positive T F T
+trainEx2 negative T T T
+
+trainEx3 negative F T T
+trainEx4 negative F F F
+trainEx5 negative F T T
+trainEx6 negative F F F
+trainEx7 negative F T F
+
