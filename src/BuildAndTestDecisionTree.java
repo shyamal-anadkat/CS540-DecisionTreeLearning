@@ -1,22 +1,27 @@
 import java.util.*;
 import java.io.*;
 
-////////////////////////////////////////////////////////////////////////////
-// Shyamal H Anadkat                                    
-// Inducing Decision Trees
-// CS540 (Shavlik)                                                                   
-////////////////////////////////////////////////////////////////////////////
+//////////////////////////////
+// Shyamal H Anadkat        //                     
+// Inducing Decision Trees  //
+// CS540 (Shavlik)          //                                                         
+//////////////////////////////
 
 
 public class BuildAndTestDecisionTree
 {
+
+	/***********************VARIABLES********************************/
 	static String [][] tuneD = new String[101][298];
 	static String [][] testD = new String[101][298];
 	static ListOfExamples tuneSet = new ListOfExamples(); 
 	static ListOfExamples testSet = new ListOfExamples();
 	static List<Double> testAcc = new ArrayList<Double>();
 	static List<Double> tuneAcc = new ArrayList<Double>();
-	static boolean debug = false;
+	static final boolean DEBUG = true;
+	static List<Integer> retVals = new ArrayList<Integer>(); //for test-set
+	static List<Integer> retVals2 = new ArrayList<Integer>(); //tune
+	/*****************************************************************/
 
 	public static void main(String[] args)
 
@@ -26,7 +31,6 @@ public class BuildAndTestDecisionTree
 		//initialize and read tune and testset examples for red-wine-quality. 
 		tuneSet.ReadInExamplesFromFile("data/red-wine-quality-tune.data");
 		testSet.ReadInExamplesFromFile("data/red-wine-quality-test.data");
-
 
 		System.out.println("DONE READING TUNE AND TEST SET...");
 
@@ -59,45 +63,46 @@ public class BuildAndTestDecisionTree
 			}
 		}
 
-
-
-		//for each example
+		System.out.println("MAKING PREDICTIONS FOR L-VALUE COMBINATIONS...");
+		//for each example get count of lowToMid for 101 trees 
 		for (int i = 0; i < testSet.size(); i++) {
-			//for each combination of L trees 
-			List<String> temp = new ArrayList<String>();
-			
-			//get predictions for that example on L combination on 101 trees and calculate accuracy 
-			
-			for(int l = 1; l <= 101; l=l+2) {
-				System.out.println(countPredictions(testD, "lowToMid",i));
-				if(countPredictions(testD, "lowToMid",i) >= l) {
-					temp.add("lowToMid");
-				} else {
-					temp.add("midToHigh");
-				}
-			}
-			testAcc.add(getAccuracy(testSet, temp));
+			retVals.add(baggedPredictions(testD, "lowToMid",i));
+			retVals2.add(baggedPredictions(tuneD, "lowToMid",i));
 		}
 
-		if(debug) {
-		//System.out.println(testAcc.toString());
-		//System.out.println(Arrays.toString(a)));
-		//trainExamples.DescribeDataset();
-		//testExamples.DescribeDataset();
-		//System.out.println("Building and Learning Decision Tree");
-		//DecisionTreeNode dtn = decisionTreeLearning(trainExamples,getAllFeatures(trainExamples), trainExamples);
-		//System.out.println("------------------PRINTING TREE BELOW-------------------------");
-		//printDTree(dtn,0);
-		//System.out.println("-------------------------------------------\n");
-		//System.out.println("Statistics for Train Data ("+trainset+") : ");
-		//System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
-		//System.out.println("Failed Examples for Train Data: "+testDecisionTree(trainExamples,dtn).toString());
-		//System.out.println("Statistics for Test Data ("+testset+") : ");
-		//System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
-		//System.out.println("Failed Examples for Test Data: "+testDecisionTree(testExamples,dtn).toString());
-		//System.out.println(dtn.getTreeSize());
+		System.out.println("GETTING ACCURACIES FOR TEST AND TUNE SETS...");
+		//for each value of L get accuracy values for predictions 
+		for(int l = 1; l < 102; l = l+2) {
+			List<String> tempTest, tempTune = new ArrayList<String>();
+			tempTest = determineBaggedPrediction(retVals,l);
+			tempTune = determineBaggedPrediction(retVals2,l);
+			testAcc.add(getAccuracy(testSet, tempTest));
+			tuneAcc.add(getAccuracy(tuneSet,tempTune));
 		}
-		
+
+
+		if(DEBUG) {
+			System.out.println("*******TEST ACCURACIES******");
+			printByLine(testAcc);
+			System.out.println("*******TUNE ACCURACIES*******");
+			printByLine(tuneAcc);
+
+			//trainExamples.DescribeDataset();
+			//testExamples.DescribeDataset();
+			//System.out.println("Building and Learning Decision Tree");
+			//DecisionTreeNode dtn = decisionTreeLearning(trainExamples,getAllFeatures(trainExamples), trainExamples);
+			//System.out.println("------------------PRINTING TREE BELOW-------------------------");
+			//printDTree(dtn,0);
+			//System.out.println("-------------------------------------------\n");
+			//System.out.println("Statistics for Train Data ("+trainset+") : ");
+			//System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
+			//System.out.println("Failed Examples for Train Data: "+testDecisionTree(trainExamples,dtn).toString());
+			//System.out.println("Statistics for Test Data ("+testset+") : ");
+			//System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
+			//System.out.println("Failed Examples for Test Data: "+testDecisionTree(testExamples,dtn).toString());
+			//System.out.println(dtn.getTreeSize());
+		}
+
 		System.out.println("---------------------------------");
 		Utilities.waitHere("Hit <enter> when ready to exit.");
 	}
@@ -187,17 +192,36 @@ public class BuildAndTestDecisionTree
 	 * @param prediction
 	 * @return
 	 */
-	private static int countPredictions(String[][] in, String prediction, int ex) {
+	private static int baggedPredictions(String[][] in, String prediction, int ex) {
 		//i of in in tree num and j is example num 
 		//System.out.println(in.length+" "+in[0].length);
 		int retVal = 0; 
+		//for each tree 
 		for(int j = 0; j < in.length ; j++) {
 			if (in[j][ex].equalsIgnoreCase(prediction)) {
 				retVal++;
 			}
 		}
-
 		return retVal;
+	}
+
+	/**
+	 * 
+	 * @param cnt is cnt of lowToMids for all examples 
+	 * @param l
+	 * @return
+	 */
+	private static List<String> determineBaggedPrediction (List<Integer> cnt, int l){
+		List<String> preds = new ArrayList<String>();
+		String retVal = "lowToMid", retVal2 = "midToHigh";
+		for(int i: cnt) {
+			if(cnt.get(i) >= l) {
+				preds.add(retVal);
+			} else {
+				preds.add(retVal2);
+			}
+		}
+		return preds;
 	}
 
 	/**
@@ -222,32 +246,35 @@ public class BuildAndTestDecisionTree
 				failed.add(ex.getName());
 			}
 		}
-		//printing out the perent accuracy here, but a seperate method has been done below
+		//printing out the parent accuracy here, but a seperate method has been done below
 		System.out.println("Percent Success: "+(double)passed/testData.size()*100+"%");
 		return failed;
 	}
 
 	/**
-	 * To calculate accurancy of list of predictions against list of examples 
+	 * To calculate accuracy of list of predictions against list of examples 
 	 * @param loe
 	 * @param predictions
 	 * @return
 	 */
 	public static Double getAccuracy(ListOfExamples loe, List<String> predictions) {
 		int cnt = 0;
-		for (Example ex: loe) {
-			for(String x: predictions) {
-				if(ex.getLabel().equalsIgnoreCase(x)) {
-					cnt++;
-				}
+		for (int x = 0; x < predictions.size(); x++) {
+			if(loe.get(x).getLabel().equalsIgnoreCase(predictions.get(x))) {
+				cnt++;
 			}
 		}
 		return (double)cnt/loe.size()*100;
 	}
 
+	/**
+	 * Return Predictions given list of examples and decision tree 
+	 * @param loe
+	 * @param root
+	 * @return
+	 */
 	public static String[] returnPredictions(ListOfExamples loe, DecisionTreeNode root) {
 		String[] retVal = new String[2];
-
 		for(int i = 0; i < loe.size(); i ++) {
 			Example ex = loe.get(i);
 		}
@@ -429,6 +456,17 @@ public class BuildAndTestDecisionTree
 		return retVal;
 	}
 
+	/**
+	 * Basic util function to print double list line by line for ease
+	 * @param testAcc2
+	 */
+	private static void printByLine(List<Double> testAcc) {
+		int i = 1; 
+		for(double d:testAcc){
+			System.out.println(i+") "+d);
+			i++;
+		}
+	}
 
 	/**
 	 * Calculates information needed for given positive and negative input 
